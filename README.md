@@ -1,31 +1,36 @@
-# RSSchool NodeJS websocket task template
-> Static http server and base task packages. 
-> By default WebSocket client tries to connect to the 3000 port.
+# Battleship
 
-## Installation
-1. Clone/download repo
-2. `npm install`
+## Preparations
 
-## Usage
-**Development**
+### Install dependencies
 
-`npm run start:dev`
+```
+npm ci
+```
 
-* App served @ `http://localhost:8181` with nodemon
+### Set ports in `.env` file
 
-**Production**
+```
+PORT_HTTP=4000
+PORT_WS=4001
+```
 
-`npm run start`
+## Run
 
-* App served @ `http://localhost:8181` without nodemon
+### Prod
 
----
+```
+npm run start
+```
 
-**All commands**
+### Dev
 
-Command | Description
---- | ---
-`npm run start:dev` | App served @ `http://localhost:8181` with nodemon
-`npm run start` | App served @ `http://localhost:8181` without nodemon
+```
+npm run start:dev
+```
 
-**Note**: replace `npm` with `yarn` in `package.json` if you use yarn.
+### Tests
+
+```
+npm run test
+```
