@@ -12,7 +12,7 @@ npm ci
 
 ```
 PORT_HTTP=4000
-PORT_WS=4001
+PORT_WS=3000
 ```
 
 ## Run
