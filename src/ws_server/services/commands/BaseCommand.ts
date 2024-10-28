@@ -1,4 +1,4 @@
-import { type WebSocket, type WebSocketServer } from 'ws'
+import { WebSocket, type WebSocketServer } from 'ws'
 import {
   type BaseCommandParams,
   type PayloadReceiveCommand,
@@ -31,7 +31,9 @@ export class BaseCommand {
     data: PayloadSendCommand
     socket: WebSocket
   }): void {
-    socket.send(JSON.stringify(data))
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(data))
+    }
   }
 
   /**
