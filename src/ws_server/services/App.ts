@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { type RawData, type WebSocket, type WebSocketServer } from 'ws'
+import { type RawData, WebSocket, type WebSocketServer } from 'ws'
 import {
   type AppParams,
   type Command,
@@ -17,8 +17,8 @@ export class App {
   readonly #commandFinder: CommandFinder
   readonly #commandInstances = new Map<string, Command>()
 
+  readonly #pingTimeout: number = 30000
   #pingInterval?: NodeJS.Timeout
-  #pingTimeout: number = 30000
 
   constructor(params: AppParams) {
     this.#server = params.server
@@ -32,6 +32,8 @@ export class App {
   #init(): void {
     this.#server.on('connection', this.#handleConnection.bind(this))
     this.#server.on('close', this.#handleClose.bind(this))
+
+    process.on('SIGINT', this.#handleExit.bind(this))
 
     this.#setPingInterval()
   }
@@ -63,6 +65,21 @@ export class App {
 
   #handleClose(): void {
     clearInterval(this.#pingInterval)
+  }
+
+  #handleExit(): void {
+    this.#server.clients.forEach((socket) => {
+      socket.close()
+
+      process.nextTick(() => {
+        if (
+          socket.readyState === WebSocket.OPEN ||
+          socket.readyState === WebSocket.CLOSING
+        ) {
+          socket.terminate()
+        }
+      })
+    })
   }
 
   #setPingInterval(): void {
