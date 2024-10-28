@@ -1,18 +1,24 @@
-/**
- * Add ships to the game board
- */
-export type PayloadReceiveShipAdd = {
-  gameId: number | string
-  ships: Array<{
-    position: {
-      x: number
-      y: number
-    }
-    direction: boolean
-    length: number
-    type: 'small' | 'medium' | 'large' | 'huge'
-  }>
-  indexPlayer: number | string
-}
+import { BaseCommand } from '../BaseCommand'
+import {
+  type Command,
+  type PayloadReceiveCommand,
+  type PayloadReceiveShipAdd
+} from '../../../interfaces'
 
 export const type = 'add_ships'
+
+export class ShipAddCommand extends BaseCommand implements Command {
+  /**
+   * @param message
+   * @throws {Error}
+   */
+  public async onReceive(
+    message: PayloadReceiveCommand | PayloadReceiveShipAdd
+  ): Promise<void> {
+    await super.onReceive(message as PayloadReceiveCommand)
+  }
+}
+
+export const shipAdd = {
+  [type]: ShipAddCommand
+}
