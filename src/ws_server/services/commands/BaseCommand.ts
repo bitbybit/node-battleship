@@ -3,7 +3,9 @@ import {
   type BaseCommandParams,
   type PayloadReceiveCommand,
   type PayloadSendCommand,
+  type Player,
   type PlayerId,
+  type Room,
   type Store
 } from '../../interfaces'
 
@@ -64,6 +66,41 @@ export class BaseCommand {
     }
 
     return this.findSocketById(playerAuthorized.socketId)
+  }
+
+  protected findPlayerByName(playerName: Player['name']): Player | undefined {
+    return this.store.players.find(({ name }) => name === playerName)
+  }
+
+  protected findPlayerById(playerId: Player['id']): Player | undefined {
+    return this.store.players.find(({ id }) => id === playerId)
+  }
+
+  /**
+   * @param socketId
+   * @returns Player
+   * @throws {Error}
+   */
+  protected findPlayerBySocketId(socketId: WebSocket['id']): Player {
+    const playerAuthorized = this.store.playersAuthorized.find(
+      (playerAuthorized) => playerAuthorized.socketId === socketId
+    )
+
+    if (playerAuthorized === undefined) {
+      throw new Error(
+        `Unable to find authorized player with socket id ${socketId}`
+      )
+    }
+
+    const player = this.findPlayerById(playerAuthorized.playerId)
+
+    if (player === undefined) {
+      throw new Error(
+        `Unable to find player with id ${playerAuthorized.playerId} and socket id ${socketId}`
+      )
+    }
+
+    return player
   }
 
   #formatForSending(message: PayloadSendCommand): string {

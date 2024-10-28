@@ -5,10 +5,12 @@ import {
   type Command,
   type PayloadReceiveCommand,
   type PayloadReceivePlayerLogin,
+  type PayloadSendPlayerLogin,
   type Player,
   type PlayerAuthorized
 } from '../../../interfaces'
 import { isValidPlayerName, isValidPlayerPassword } from '../../../validation'
+import { RoomUpdateCommand } from '../room/Update'
 
 export const type = 'reg'
 
@@ -36,43 +38,45 @@ export class PlayerLoginCommand extends BaseCommand implements Command {
         socket
       })
 
+      const data: PayloadSendPlayerLogin = {
+        error: false,
+        errorText: '',
+        index: playerAuthorized.playerId,
+        name: payload.name
+      }
+
       this.send({
         data: {
-          data: {
-            error: false,
-            errorText: '',
-            index: playerAuthorized.playerId,
-            name: payload.name
-          },
+          data,
           id: 0,
           type
         },
         socket
       })
     } catch (error) {
+      const data: PayloadSendPlayerLogin = {
+        error: true,
+        errorText: (error as Error)?.message ?? 'Unknown error',
+        index: '',
+        name: payload.name
+      }
+
       this.send({
         data: {
-          data: {
-            error: true,
-            errorText: (error as Error)?.message ?? 'Unknown error',
-            index: '',
-            name: payload.name
-          },
+          data,
           id: 0,
           type
         },
         socket
       })
     }
-  }
 
-  /**
-   * @param playerName
-   * @returns WebSocket
-   * @throws {Error}
-   */
-  #findPlayerByName(playerName: Player['name']): Player | undefined {
-    return this.store.players.find(({ name }) => name === playerName)
+    const updateRoom = new RoomUpdateCommand({
+      server: this.server,
+      store: this.store
+    })
+
+    await updateRoom.sendCommand()
   }
 
   /**
@@ -92,7 +96,7 @@ export class PlayerLoginCommand extends BaseCommand implements Command {
   }
 
   #signUp(payload: PayloadReceivePlayerLogin): Player {
-    const existingPlayer = this.#findPlayerByName(payload.name)
+    const existingPlayer = this.findPlayerByName(payload.name)
 
     return existingPlayer === undefined
       ? this.#createPlayer({

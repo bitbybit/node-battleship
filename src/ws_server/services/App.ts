@@ -158,7 +158,7 @@ export class App {
   #parseMessage(rawData: RawData): PayloadReceiveCommand {
     const parsed = JSON.parse(rawData.toString())
 
-    parsed.data = JSON.parse(parsed.data)
+    parsed.data = parsed.data === '' ? '' : JSON.parse(parsed.data)
 
     return parsed as PayloadReceiveCommand
   }

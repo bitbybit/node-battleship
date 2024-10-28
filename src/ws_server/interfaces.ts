@@ -37,6 +37,12 @@ export type AttackStatus = 'miss' | 'killed' | 'shot'
 
 export type RoomId = string
 
+export type Room = {
+  id: RoomId
+  player1Id: PlayerId
+  player2Id: PlayerId | null
+}
+
 /**
  * Login or create player
  */
@@ -183,6 +189,7 @@ export type PayloadSendCommand = {
 export type Store = {
   players: Player[]
   playersAuthorized: PlayerAuthorized[]
+  rooms: Room[]
 }
 
 export type AppParams = {
