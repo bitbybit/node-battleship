@@ -19,10 +19,10 @@ export type Player = {
   password: string
 }
 
-export type PlayersAuthorized = Array<{
+export type PlayerAuthorized = {
   playerId: PlayerId
   socketId: WebSocket['id']
-}>
+}
 
 export type GameId = string
 
@@ -182,7 +182,7 @@ export type PayloadSendCommand = {
 
 export type Store = {
   players: Player[]
-  playersAuthorized: PlayersAuthorized
+  playersAuthorized: PlayerAuthorized[]
 }
 
 export type AppParams = {
@@ -196,7 +196,10 @@ export type BaseCommandParams = {
 }
 
 export interface Command {
-  onReceive(message: PayloadReceiveCommand): Promise<unknown>
+  onReceive(params: {
+    message: PayloadReceiveCommand
+    socket: WebSocket
+  }): Promise<unknown>
 }
 
 export type CommandClass = { new (params: BaseCommandParams): Command }

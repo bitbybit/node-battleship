@@ -16,14 +16,6 @@ export class BaseCommand {
     this.store = params.store
   }
 
-  /**
-   * @param message
-   * @throws {Error}
-   */
-  protected async onReceive(message: PayloadReceiveCommand): Promise<void> {
-    this.#log(message)
-  }
-
   protected send({
     data,
     socket
@@ -32,7 +24,11 @@ export class BaseCommand {
     socket: WebSocket
   }): void {
     if (socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify(data))
+      const formatted = this.#formatForSending(data)
+
+      socket.send(formatted)
+
+      this.logOnSend(data)
     }
   }
 
@@ -70,7 +66,18 @@ export class BaseCommand {
     return this.findSocketById(playerAuthorized.socketId)
   }
 
-  #log(message: PayloadReceiveCommand): void {
-    console.log('Received: %s - %s', message.type, JSON.stringify(message.data))
+  #formatForSending(message: PayloadSendCommand): string {
+    return JSON.stringify({
+      ...message,
+      data: JSON.stringify(message.data)
+    })
+  }
+
+  protected logOnReceive(message: PayloadReceiveCommand): void {
+    console.log('Received: %s - %s', message.type, JSON.stringify(message))
+  }
+
+  protected logOnSend(message: PayloadSendCommand): void {
+    console.log('Sent: %s - %s', message.type, this.#formatForSending(message))
   }
 }

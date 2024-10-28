@@ -42,19 +42,34 @@ export class App {
   #handleConnection(socket: WebSocket): void {
     socket.id = randomUUID()
 
-    socket.on('message', this.#handleMessage.bind(this))
+    socket.on('message', (rawData) =>
+      this.#handleMessage({
+        rawData,
+        socket
+      })
+    )
+
     socket.on('error', this.#handleError.bind(this))
 
     this.#setPongHandler(socket)
   }
 
-  async #handleMessage(rawData: RawData): Promise<void> {
+  async #handleMessage({
+    rawData,
+    socket
+  }: {
+    rawData: RawData
+    socket: WebSocket
+  }): Promise<void> {
     try {
-      const message = JSON.parse(rawData.toString()) as PayloadReceiveCommand
+      const message = this.#parseMessage(rawData)
       const commandClass = this.#commandFinder.find(message)
       const commandInstance = this.#getInstanceOfCommand(commandClass)
 
-      await commandInstance.onReceive(message)
+      await commandInstance.onReceive({
+        message,
+        socket
+      })
     } catch (error) {
       this.#handleError(error)
     }
@@ -138,5 +153,13 @@ export class App {
     this.#commandInstances.set(commandClass.name, instance)
 
     return instance
+  }
+
+  #parseMessage(rawData: RawData): PayloadReceiveCommand {
+    const parsed = JSON.parse(rawData.toString())
+
+    parsed.data = JSON.parse(parsed.data)
+
+    return parsed as PayloadReceiveCommand
   }
 }
