@@ -1,3 +1,4 @@
+import { type WebSocket } from 'ws'
 import { BaseCommand } from '../BaseCommand'
 import {
   type Command,
@@ -9,13 +10,19 @@ export const type = 'add_ships'
 
 export class ShipAddCommand extends BaseCommand implements Command {
   /**
-   * @param message
+   * @param params
+   * @param params.message
+   * @param params.socket
    * @throws {Error}
    */
-  public async onReceive(
-    message: PayloadReceiveCommand | PayloadReceiveShipAdd
-  ): Promise<void> {
-    await super.onReceive(message as PayloadReceiveCommand)
+  public async onReceive({
+    message,
+    socket
+  }: {
+    message: PayloadReceiveCommand & { data: PayloadReceiveShipAdd }
+    socket: WebSocket
+  }): Promise<void> {
+    this.logOnReceive(message as PayloadReceiveCommand)
   }
 }
 

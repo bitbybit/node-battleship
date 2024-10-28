@@ -1,3 +1,4 @@
+import { type WebSocket } from 'ws'
 import { BaseCommand } from '../BaseCommand'
 import {
   type Command,
@@ -9,13 +10,19 @@ export const type = 'randomAttack'
 
 export class GameAttackRandomCommand extends BaseCommand implements Command {
   /**
-   * @param message
+   * @param params
+   * @param params.message
+   * @param params.socket
    * @throws {Error}
    */
-  public async onReceive(
-    message: PayloadReceiveCommand | PayloadReceiveGameAttackRandom
-  ): Promise<void> {
-    await super.onReceive(message as PayloadReceiveCommand)
+  public async onReceive({
+    message,
+    socket
+  }: {
+    message: PayloadReceiveCommand & { data: PayloadReceiveGameAttackRandom }
+    socket: WebSocket
+  }): Promise<void> {
+    this.logOnReceive(message as PayloadReceiveCommand)
   }
 }
 

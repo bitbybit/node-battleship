@@ -1,3 +1,4 @@
+import { type WebSocket } from 'ws'
 import { BaseCommand } from '../BaseCommand'
 import {
   type Command,
@@ -5,8 +6,7 @@ import {
   type PayloadReceiveRoomAddUser,
   type Room
 } from '../../../interfaces'
-import type { WebSocket } from 'ws'
-import { randomUUID } from 'node:crypto'
+
 import { RoomUpdateCommand } from './Update'
 
 export const type = 'add_user_to_room'
