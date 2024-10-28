@@ -103,6 +103,12 @@ export class BaseCommand {
     return player
   }
 
+  protected findEmptyRoomIndexById(roomId: Room['id']): number {
+    return this.store.rooms.findIndex(
+      ({ id, player2Id }) => id === roomId && player2Id === null
+    )
+  }
+
   #formatForSending(message: PayloadSendCommand): string {
     return JSON.stringify({
       ...message,
