@@ -34,6 +34,7 @@ export class App {
     this.#server.on('close', this.#handleClose.bind(this))
 
     process.on('SIGINT', this.#handleExit.bind(this))
+    process.on('SIGTERM', this.#handleExit.bind(this))
 
     this.#setPingInterval()
   }
@@ -69,7 +70,7 @@ export class App {
 
   #handleExit(): void {
     this.#server.clients.forEach((socket) => {
-      socket.close()
+      socket.close(1001, 'Shutting down WS server...')
 
       process.nextTick(() => {
         if (
@@ -79,6 +80,12 @@ export class App {
           socket.terminate()
         }
       })
+    })
+
+    this.#server.close(() => {
+      console.log('WS server shut down.')
+
+      process.exit(0)
     })
   }
 
