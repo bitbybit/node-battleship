@@ -26,6 +26,12 @@ export type PlayerAuthorized = {
 
 export type GameId = string
 
+export type Game = {
+  id: GameId
+  player1Id: PlayerId
+  player2Id: PlayerId
+}
+
 export type ShipPosition = {
   x: number
   y: number
@@ -190,6 +196,7 @@ export type Store = {
   players: Player[]
   playersAuthorized: PlayerAuthorized[]
   rooms: Room[]
+  games: Game[]
 }
 
 export type AppParams = {

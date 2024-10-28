@@ -103,6 +103,12 @@ export class BaseCommand {
     return player
   }
 
+  protected findRoomById(roomId: Room['id']): Room | undefined {
+    return this.store.rooms.find(
+      ({ id, player2Id }) => id === roomId && player2Id !== null
+    )
+  }
+
   protected findEmptyRoomIndexById(roomId: Room['id']): number {
     return this.store.rooms.findIndex(
       ({ id, player2Id }) => id === roomId && player2Id === null

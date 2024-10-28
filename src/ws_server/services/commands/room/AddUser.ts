@@ -6,8 +6,8 @@ import {
   type PayloadReceiveRoomAddUser,
   type Room
 } from '../../../interfaces'
-
 import { RoomUpdateCommand } from './Update'
+import { RoomCreateGameCommand } from './CreateGame'
 
 export const type = 'add_user_to_room'
 
@@ -37,6 +37,15 @@ export class RoomAddUserCommand extends BaseCommand implements Command {
     })
 
     await updateRoom.sendCommand()
+
+    const createGame = new RoomCreateGameCommand({
+      server: this.server,
+      store: this.store
+    })
+
+    await createGame.sendCommand({
+      roomId
+    })
   }
 
   #enterRoom(socket: WebSocket, roomId: Room['id']): Room {
