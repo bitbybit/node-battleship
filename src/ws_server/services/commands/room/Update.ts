@@ -1,8 +1,6 @@
-import { type WebSocket } from 'ws'
 import { BaseCommand } from '../BaseCommand'
 import {
   type Command,
-  type PayloadReceiveCommand,
   type PayloadSendRoomUpdate,
   type Room
 } from '../../../interfaces'
@@ -10,21 +8,7 @@ import {
 export class RoomUpdateCommand extends BaseCommand implements Command {
   static readonly type = 'update_room'
 
-  /**
-   * @param params
-   * @param params.message
-   * @param params.socket
-   * @throws {Error}
-   */
-  public async onReceive({
-    message,
-    socket
-  }: {
-    message: PayloadReceiveCommand
-    socket: WebSocket
-  }): Promise<void> {
-    this.logOnReceive(message)
-  }
+  protected async onReceiveAction(): Promise<void> {}
 
   /**
    * @throws {Error}

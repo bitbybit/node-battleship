@@ -15,13 +15,11 @@ export class GameAttackRandomCommand extends BaseCommand implements Command {
    * @param params.socket
    * @throws {Error}
    */
-  public async onReceive({
+  protected async onReceiveAction({
     message,
     socket
   }: {
     message: PayloadReceiveCommand & { data: PayloadReceiveGameAttackRandom }
     socket: WebSocket
-  }): Promise<void> {
-    this.logOnReceive(message as PayloadReceiveCommand)
-  }
+  }): Promise<void> {}
 }

@@ -15,13 +15,11 @@ export class ShipAddCommand extends BaseCommand implements Command {
    * @param params.socket
    * @throws {Error}
    */
-  public async onReceive({
+  protected async onReceiveAction({
     message,
     socket
   }: {
     message: PayloadReceiveCommand & { data: PayloadReceiveShipAdd }
     socket: WebSocket
-  }): Promise<void> {
-    this.logOnReceive(message as PayloadReceiveCommand)
-  }
+  }): Promise<void> {}
 }

@@ -18,15 +18,13 @@ export class RoomCreateCommand extends BaseCommand implements Command {
    * @param params.socket
    * @throws {Error}
    */
-  public async onReceive({
+  protected async onReceiveAction({
     message,
     socket
   }: {
     message: PayloadReceiveCommand & { data: PayloadReceiveRoomCreate }
     socket: WebSocket
   }): Promise<void> {
-    this.logOnReceive(message as PayloadReceiveCommand)
-
     this.#createRoom(socket)
 
     const updateRoom = new RoomUpdateCommand({

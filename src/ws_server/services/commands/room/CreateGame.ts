@@ -1,31 +1,11 @@
 import { randomUUID } from 'node:crypto'
-import { type WebSocket } from 'ws'
 import { BaseCommand } from '../BaseCommand'
-import {
-  type Command,
-  type PayloadReceiveCommand,
-  type PlayerId,
-  type Room
-} from '../../../interfaces'
+import { type Command, type PlayerId, type Room } from '../../../interfaces'
 
 export class RoomCreateGameCommand extends BaseCommand implements Command {
   static readonly type = 'create_game'
 
-  /**
-   * @param params
-   * @param params.message
-   * @param params.socket
-   * @throws {Error}
-   */
-  public async onReceive({
-    message,
-    socket
-  }: {
-    message: PayloadReceiveCommand
-    socket: WebSocket
-  }): Promise<void> {
-    this.logOnReceive(message)
-  }
+  protected async onReceiveAction(): Promise<void> {}
 
   /**
    * @param params

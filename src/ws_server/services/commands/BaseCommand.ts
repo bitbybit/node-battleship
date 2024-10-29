@@ -9,7 +9,7 @@ import {
   type Store
 } from '../../interfaces'
 
-export class BaseCommand {
+export abstract class BaseCommand {
   protected readonly server: WebSocketServer
   protected readonly store: Store
 
@@ -17,6 +17,35 @@ export class BaseCommand {
     this.server = params.server
     this.store = params.store
   }
+
+  /**
+   * @param params
+   * @param params.message
+   * @param params.socket
+   * @throws {Error}
+   */
+  public async onReceive({
+    message,
+    socket
+  }: {
+    message: PayloadReceiveCommand
+    socket: WebSocket
+  }): Promise<void> {
+    this.logOnReceive(message)
+
+    await this.onReceiveAction({
+      message,
+      socket
+    })
+  }
+
+  protected abstract onReceiveAction({
+    message,
+    socket
+  }: {
+    message: PayloadReceiveCommand
+    socket: WebSocket
+  }): Promise<unknown>
 
   protected send({
     data,
