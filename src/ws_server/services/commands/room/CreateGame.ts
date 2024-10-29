@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import { BaseCommand } from '../BaseCommand'
-import { type Command, type Game, type Room } from '../../../interfaces'
+import {
+  type Command,
+  type Game,
+  PayloadSendRoomCreateGame,
+  type Room
+} from '../../../interfaces'
 
 export class RoomCreateGameCommand extends BaseCommand implements Command {
   static readonly type = 'create_game'
@@ -16,7 +21,7 @@ export class RoomCreateGameCommand extends BaseCommand implements Command {
     const room = this.findRoomById(roomId)
 
     if (room === undefined) {
-      throw new Error(`Can not find non-empty room with id ${roomId}`)
+      throw new Error(`Unable to find non-empty room with id ${roomId}`)
     }
 
     const { id, player1Id, player2Id } = this.#createGameForRoom(room)
@@ -25,12 +30,14 @@ export class RoomCreateGameCommand extends BaseCommand implements Command {
     for (const playerId of players) {
       const socket = this.findSocketByPlayerId(playerId)
 
+      const data: PayloadSendRoomCreateGame = {
+        idGame: id,
+        idPlayer: playerId
+      }
+
       this.send({
-        data: {
-          data: {
-            idGame: id,
-            idPlayer: playerId
-          },
+        message: {
+          data,
           id: 0,
           type: RoomCreateGameCommand.type
         },

@@ -2,11 +2,12 @@ import { WebSocket, type WebSocketServer } from 'ws'
 import {
   type AbstractCommandFinder,
   type BaseCommandParams,
+  type Game,
   type PayloadReceiveCommand,
   type PayloadSendCommand,
   type Player,
-  type PlayerId,
   type Room,
+  type Ship,
   type Store
 } from '../../interfaces'
 
@@ -51,18 +52,18 @@ export abstract class BaseCommand {
   }): Promise<unknown>
 
   protected send({
-    data,
+    message,
     socket
   }: {
-    data: PayloadSendCommand
+    message: PayloadSendCommand
     socket: WebSocket
   }): void {
     if (socket.readyState === WebSocket.OPEN) {
-      const formatted = this.#formatForSending(data)
+      const formattedMessage = this.#formatMessage(message)
 
-      socket.send(formatted)
+      socket.send(formattedMessage)
 
-      this.logOnSend(data)
+      this.logOnSend(message)
     }
   }
 
@@ -88,7 +89,7 @@ export abstract class BaseCommand {
    * @returns WebSocket
    * @throws {Error}
    */
-  protected findSocketByPlayerId(playerId: PlayerId): WebSocket {
+  protected findSocketByPlayerId(playerId: Player['id']): WebSocket {
     const playerAuthorized = this.store.playersAuthorized.find(
       (playerAuthorized) => playerAuthorized.playerId === playerId
     )
@@ -147,7 +148,44 @@ export abstract class BaseCommand {
     )
   }
 
-  #formatForSending(message: PayloadSendCommand): string {
+  protected findGameById(gameId: Game['id']): Game | undefined {
+    return this.store.games.find(({ id }) => id === gameId)
+  }
+
+  protected findShipsOfPlayersByGameId(gameId: Game['id']): Ship[] {
+    const game = this.findGameById(gameId)
+
+    if (game === undefined) {
+      return []
+    }
+
+    const ships = this.store.ships.filter(
+      (ship) =>
+        ship.gameId === gameId &&
+        (ship.playerId === game.player1Id || ship.playerId === game.player2Id)
+    )
+
+    const hasBoth =
+      ships.some(({ playerId }) => playerId === game.player1Id) &&
+      ships.some(({ playerId }) => playerId === game.player2Id)
+
+    if (!hasBoth) {
+      return []
+    }
+
+    return ships
+  }
+
+  protected findShipsByGameAndPlayer(
+    gameId: Game['id'],
+    playerId: Player['id']
+  ): Ship[] {
+    return this.store.ships.filter(
+      (ship) => ship.gameId === gameId && ship.playerId === playerId
+    )
+  }
+
+  #formatMessage(message: PayloadSendCommand): string {
     return JSON.stringify({
       ...message,
       data: JSON.stringify(message.data)
@@ -155,10 +193,10 @@ export abstract class BaseCommand {
   }
 
   protected logOnReceive(message: PayloadReceiveCommand): void {
-    console.log('Received: %s - %s', message.type, JSON.stringify(message))
+    console.log('RECEIVED: %s - %s', message.type, JSON.stringify(message))
   }
 
   protected logOnSend(message: PayloadSendCommand): void {
-    console.log('Sent: %s - %s', message.type, this.#formatForSending(message))
+    console.log('SENT: %s - %s', message.type, this.#formatMessage(message))
   }
 }

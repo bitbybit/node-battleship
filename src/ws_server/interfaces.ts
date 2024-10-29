@@ -32,12 +32,24 @@ export type Game = {
   player2Id: PlayerId
 }
 
+export type ShipId = string
+
 export type ShipPosition = {
   x: number
   y: number
 }
 
 export type ShipType = 'small' | 'medium' | 'large' | 'huge'
+
+export type Ship = {
+  direction: boolean
+  gameId: GameId
+  id: ShipId
+  length: number
+  playerId: PlayerId
+  position: ShipPosition
+  type: ShipType
+}
 
 export type AttackStatus = 'miss' | 'killed' | 'shot'
 
@@ -53,7 +65,7 @@ export type Room = {
  * Login or create player
  */
 export type PayloadReceivePlayerLogin = {
-  name: string
+  name: Player['name']
   password: string
 }
 
@@ -61,14 +73,14 @@ export type PayloadSendPlayerLogin = {
   error: boolean
   errorText: string
   index: PlayerId
-  name: string
+  name: Player['name']
 }
 
 /**
  * Update winners (for all after every winners table update)
  */
 export type PayloadSendPlayerUpdateWinners = Array<{
-  name: string
+  name: Player['name']
   wins: number
 }>
 
@@ -99,7 +111,7 @@ export type PayloadSendRoomCreateGame = {
 export type PayloadSendRoomUpdate = Array<{
   roomId: RoomId
   roomUsers: Array<{
-    name: string
+    name: Player['name']
     index: PlayerId
   }>
 }>
@@ -108,11 +120,11 @@ export type PayloadSendRoomUpdate = Array<{
  * Add ships to the game board
  */
 export type PayloadReceiveShipAdd = {
-  gameId: number | string
+  gameId: GameId
   ships: Array<{
     position: ShipPosition
-    direction: boolean
-    length: number
+    direction: Ship['direction']
+    length: Ship['length']
     type: ShipType
   }>
   indexPlayer: PlayerId
@@ -197,6 +209,7 @@ export type Store = {
   playersAuthorized: PlayerAuthorized[]
   rooms: Room[]
   games: Game[]
+  ships: Ship[]
 }
 
 export interface AbstractCommandFinder {

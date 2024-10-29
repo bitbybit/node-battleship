@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { type RawData, WebSocket, type WebSocketServer } from 'ws'
 import { type AppParams, type PayloadReceiveCommand } from '../interfaces'
-import { CommandFinder } from './commands/CommandFinder'
+import { CommandFinder } from './CommandFinder'
 
 export class App {
   readonly #server: WebSocketServer

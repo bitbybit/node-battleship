@@ -44,7 +44,7 @@ export class PlayerLoginCommand extends BaseCommand implements Command {
       }
 
       this.send({
-        data: {
+        message: {
           data,
           id: 0,
           type: PlayerLoginCommand.type
@@ -60,7 +60,7 @@ export class PlayerLoginCommand extends BaseCommand implements Command {
       }
 
       this.send({
-        data: {
+        message: {
           data,
           id: 0,
           type: PlayerLoginCommand.type

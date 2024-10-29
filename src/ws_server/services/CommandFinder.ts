@@ -6,20 +6,20 @@ import {
   type CommandFinderParams,
   type PayloadReceiveCommand,
   type Store
-} from '../../interfaces'
-import { PlayerLoginCommand } from './player/Login'
-import { PlayerUpdateWinnersCommand } from './player/UpdateWinners'
-import { RoomCreateCommand } from './room/Create'
-import { RoomAddUserCommand } from './room/AddUser'
-import { RoomCreateGameCommand } from './room/CreateGame'
-import { RoomUpdateCommand } from './room/Update'
-import { ShipAddCommand } from './ship/Add'
-import { ShipStartGameCommand } from './ship/StartGame'
-import { GameAttackRandomCommand } from './game/AttackRandom'
-import { GameAttackCommand } from './game/Attack'
-import { GameTurnCommand } from './game/Turn'
-import { GameFinishCommand } from './game/Finish'
-import { BaseCommand } from './BaseCommand'
+} from '../interfaces'
+import { PlayerLoginCommand } from './commands/player/Login'
+import { PlayerUpdateWinnersCommand } from './commands/player/UpdateWinners'
+import { RoomCreateCommand } from './commands/room/Create'
+import { RoomAddUserCommand } from './commands/room/AddUser'
+import { RoomCreateGameCommand } from './commands/room/CreateGame'
+import { RoomUpdateCommand } from './commands/room/Update'
+import { ShipAddCommand } from './commands/ship/Add'
+import { ShipStartGameCommand } from './commands/ship/StartGame'
+import { GameAttackRandomCommand } from './commands/game/AttackRandom'
+import { GameAttackCommand } from './commands/game/Attack'
+import { GameTurnCommand } from './commands/game/Turn'
+import { GameFinishCommand } from './commands/game/Finish'
+import { BaseCommand } from './commands/BaseCommand'
 
 export class CommandFinder implements AbstractCommandFinder {
   readonly #server: WebSocketServer

@@ -20,7 +20,7 @@ export class RoomUpdateCommand extends BaseCommand implements Command {
 
     this.server.clients.forEach((socket) => {
       this.send({
-        data: {
+        message: {
           data,
           id: 0,
           type: RoomUpdateCommand.type
@@ -42,7 +42,7 @@ export class RoomUpdateCommand extends BaseCommand implements Command {
     const player1 = this.findPlayerById(player1Id)
 
     if (player1 === undefined) {
-      throw new Error('Found an empty room')
+      throw new Error(`The room with id ${id} is an empty room`)
     }
 
     const roomUsers = [
@@ -55,12 +55,14 @@ export class RoomUpdateCommand extends BaseCommand implements Command {
     if (player2Id !== null) {
       const player2 = this.findPlayerById(player2Id)
 
-      if (player2 !== undefined) {
-        roomUsers.push({
-          name: player2.name,
-          index: player2.id
-        })
+      if (player2 === undefined) {
+        throw new Error(`Unable to find player with id ${player2Id}`)
       }
+
+      roomUsers.push({
+        name: player2.name,
+        index: player2.id
+      })
     }
 
     return {

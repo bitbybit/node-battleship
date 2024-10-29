@@ -4,5 +4,6 @@ export const store: Store = {
   players: [],
   playersAuthorized: [],
   rooms: [],
-  games: []
+  games: [],
+  ships: []
 }
