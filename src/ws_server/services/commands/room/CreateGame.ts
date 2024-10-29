@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { BaseCommand } from '../BaseCommand'
-import { type Command, type PlayerId, type Room } from '../../../interfaces'
+import { type Command, type Game, type Room } from '../../../interfaces'
 
 export class RoomCreateGameCommand extends BaseCommand implements Command {
   static readonly type = 'create_game'
@@ -19,39 +19,49 @@ export class RoomCreateGameCommand extends BaseCommand implements Command {
       throw new Error(`Can not find non-empty room with id ${roomId}`)
     }
 
-    const game = {
-      id: randomUUID(),
-      player1Id: room.player1Id,
-      player2Id: room.player2Id as PlayerId
+    const { id, player1Id, player2Id } = this.#createGameForRoom(room)
+    const players = [player1Id, player2Id]
+
+    for (const playerId of players) {
+      const socket = this.findSocketByPlayerId(playerId)
+
+      this.send({
+        data: {
+          data: {
+            idGame: id,
+            idPlayer: playerId
+          },
+          id: 0,
+          type: RoomCreateGameCommand.type
+        },
+        socket
+      })
+    }
+  }
+
+  /**
+   * @param room
+   * @param room.id
+   * @param room.player1Id
+   * @param room.player2Id
+   * @returns Game
+   * @throws {Error}
+   */
+  #createGameForRoom({ id, player1Id, player2Id }: Room): Game {
+    if (player2Id === null) {
+      throw new Error(
+        `The room with id ${id} has only one player with id ${player1Id}`
+      )
     }
 
-    const player1Socket = this.findSocketByPlayerId(room.player1Id)
-    const player2Socket = this.findSocketByPlayerId(room.player2Id as PlayerId)
+    const newGame = {
+      id: randomUUID(),
+      player1Id,
+      player2Id
+    }
 
-    this.store.games.push(game)
+    this.store.games.push(newGame)
 
-    this.send({
-      data: {
-        data: {
-          idGame: game.id,
-          idPlayer: room.player1Id
-        },
-        id: 0,
-        type: RoomCreateGameCommand.type
-      },
-      socket: player1Socket
-    })
-
-    this.send({
-      data: {
-        data: {
-          idGame: game.id,
-          idPlayer: room.player2Id as PlayerId
-        },
-        id: 0,
-        type: RoomCreateGameCommand.type
-      },
-      socket: player2Socket
-    })
+    return newGame
   }
 }

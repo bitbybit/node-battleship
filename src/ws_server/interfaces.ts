@@ -199,12 +199,23 @@ export type Store = {
   games: Game[]
 }
 
+export interface AbstractCommandFinder {
+  findByMessage(message: PayloadReceiveCommand): Command
+  findByType(type: string): Command
+}
+
 export type AppParams = {
   server: WebSocketServer
   store: Store
 }
 
 export type BaseCommandParams = {
+  commandFinder: AbstractCommandFinder
+  server: WebSocketServer
+  store: Store
+}
+
+export type CommandFinderParams = {
   server: WebSocketServer
   store: Store
 }
@@ -214,6 +225,8 @@ export interface Command {
     message: PayloadReceiveCommand
     socket: WebSocket
   }): Promise<unknown>
+
+  sendCommand(payload?: unknown): Promise<unknown>
 }
 
 export interface CommandWithType {

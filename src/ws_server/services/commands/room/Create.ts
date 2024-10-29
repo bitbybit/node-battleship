@@ -27,12 +27,9 @@ export class RoomCreateCommand extends BaseCommand implements Command {
   }): Promise<void> {
     this.#createRoom(socket)
 
-    const updateRoom = new RoomUpdateCommand({
-      server: this.server,
-      store: this.store
-    })
+    const roomUpdate = this.commandFinder.findByType(RoomUpdateCommand.type)
 
-    await updateRoom.sendCommand()
+    await roomUpdate.sendCommand()
   }
 
   #createRoom(socket: WebSocket): Room {
@@ -48,4 +45,9 @@ export class RoomCreateCommand extends BaseCommand implements Command {
 
     return newRoom
   }
+
+  /**
+   * @throws {Error}
+   */
+  public async sendCommand(): Promise<void> {}
 }

@@ -69,12 +69,9 @@ export class PlayerLoginCommand extends BaseCommand implements Command {
       })
     }
 
-    const updateRoom = new RoomUpdateCommand({
-      server: this.server,
-      store: this.store
-    })
+    const roomUpdate = this.commandFinder.findByType(RoomUpdateCommand.type)
 
-    await updateRoom.sendCommand()
+    await roomUpdate.sendCommand()
   }
 
   /**
@@ -151,4 +148,9 @@ export class PlayerLoginCommand extends BaseCommand implements Command {
 
     return playerAuthorized
   }
+
+  /**
+   * @throws {Error}
+   */
+  public async sendCommand(): Promise<void> {}
 }

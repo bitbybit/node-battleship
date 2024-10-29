@@ -22,4 +22,9 @@ export class ShipAddCommand extends BaseCommand implements Command {
     message: PayloadReceiveCommand & { data: PayloadReceiveShipAdd }
     socket: WebSocket
   }): Promise<void> {}
+
+  /**
+   * @throws {Error}
+   */
+  public async sendCommand(): Promise<void> {}
 }

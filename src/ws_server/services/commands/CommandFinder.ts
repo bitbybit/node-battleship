@@ -1,4 +1,12 @@
-import { type CommandClass, type PayloadReceiveCommand } from '../../interfaces'
+import { type WebSocketServer } from 'ws'
+import {
+  type AbstractCommandFinder,
+  type Command,
+  type CommandClass,
+  type CommandFinderParams,
+  type PayloadReceiveCommand,
+  type Store
+} from '../../interfaces'
 import { PlayerLoginCommand } from './player/Login'
 import { PlayerUpdateWinnersCommand } from './player/UpdateWinners'
 import { RoomCreateCommand } from './room/Create'
@@ -11,11 +19,19 @@ import { GameAttackRandomCommand } from './game/AttackRandom'
 import { GameAttackCommand } from './game/Attack'
 import { GameTurnCommand } from './game/Turn'
 import { GameFinishCommand } from './game/Finish'
+import { BaseCommand } from './BaseCommand'
 
-export class CommandFinder {
+export class CommandFinder implements AbstractCommandFinder {
+  readonly #server: WebSocketServer
+  readonly #store: Store
+
   readonly #commands: CommandClass[]
+  readonly #instances = new Map<string, Command>()
 
-  constructor() {
+  constructor(params: CommandFinderParams) {
+    this.#server = params.server
+    this.#store = params.store
+
     this.#commands = [
       PlayerLoginCommand,
       PlayerUpdateWinnersCommand,
@@ -34,16 +50,25 @@ export class CommandFinder {
 
   /**
    * @param message
-   * @returns CommandClass
+   * @returns Command
    * @throws {Error}
    */
-  public find(message: PayloadReceiveCommand): CommandClass {
+  public findByMessage(message: PayloadReceiveCommand): Command {
     if (!this.#isValidMessage(message)) {
       throw new Error('Unknown message type')
     }
 
     const { type } = message
 
+    return this.findByType(type)
+  }
+
+  /**
+   * @param type
+   * @returns Command
+   * @throws {Error}
+   */
+  public findByType(type: string): Command {
     const command = this.#commands.find(
       (commandClass) => commandClass.type === type
     )
@@ -52,7 +77,34 @@ export class CommandFinder {
       throw new Error(`Command not found for message type ${type}`)
     }
 
-    return command
+    return this.#getInstance(command)
+  }
+
+  #getInstance(commandClass: CommandClass): Command {
+    const hasInstance = this.#instances.has(commandClass.type)
+
+    if (hasInstance) {
+      const instance = this.#instances.get(commandClass.type)
+      const isCommand = instance instanceof BaseCommand
+
+      if (!isCommand) {
+        throw new Error(
+          `Class with a type ${commandClass.type} is not a Command class instance`
+        )
+      }
+
+      return instance
+    }
+
+    const instance = new commandClass({
+      commandFinder: this,
+      server: this.#server,
+      store: this.#store
+    })
+
+    this.#instances.set(commandClass.type, instance)
+
+    return instance
   }
 
   #isValidMessage(message: {

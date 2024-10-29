@@ -1,30 +1,22 @@
 import { randomUUID } from 'node:crypto'
 import { type RawData, WebSocket, type WebSocketServer } from 'ws'
-import {
-  type AppParams,
-  type Command,
-  type CommandClass,
-  type PayloadReceiveCommand,
-  type Store
-} from '../interfaces'
+import { type AppParams, type PayloadReceiveCommand } from '../interfaces'
 import { CommandFinder } from './commands/CommandFinder'
-import { BaseCommand } from './commands/BaseCommand'
 
 export class App {
   readonly #server: WebSocketServer
-  readonly #store: Store
-
   readonly #commandFinder: CommandFinder
-  readonly #commandInstances = new Map<string, Command>()
 
   readonly #pingTimeout: number = 30000
   #pingInterval?: NodeJS.Timeout
 
   constructor(params: AppParams) {
     this.#server = params.server
-    this.#store = params.store
 
-    this.#commandFinder = new CommandFinder()
+    this.#commandFinder = new CommandFinder({
+      server: params.server,
+      store: params.store
+    })
 
     this.#init()
   }
@@ -63,10 +55,9 @@ export class App {
   }): Promise<void> {
     try {
       const message = this.#parseMessage(rawData)
-      const commandClass = this.#commandFinder.find(message)
-      const commandInstance = this.#getInstanceOfCommand(commandClass)
+      const command = this.#commandFinder.findByMessage(message)
 
-      await commandInstance.onReceive({
+      await command.onReceive({
         message,
         socket
       })
@@ -129,32 +120,6 @@ export class App {
     } catch (error) {
       this.#handleError(error)
     }
-  }
-
-  #getInstanceOfCommand(commandClass: CommandClass): Command {
-    const hasInstance = this.#commandInstances.has(commandClass.type)
-
-    if (hasInstance) {
-      const instance = this.#commandInstances.get(commandClass.type)
-      const isCommand = instance instanceof BaseCommand
-
-      if (!isCommand) {
-        throw new Error(
-          `Class with a type ${commandClass.type} is not a Command class instance`
-        )
-      }
-
-      return instance
-    }
-
-    const instance = new commandClass({
-      server: this.#server,
-      store: this.#store
-    })
-
-    this.#commandInstances.set(commandClass.type, instance)
-
-    return instance
   }
 
   #parseMessage(rawData: RawData): PayloadReceiveCommand {

@@ -29,17 +29,11 @@ export class RoomAddUserCommand extends BaseCommand implements Command {
 
     this.#enterRoom(socket, roomId)
 
-    const updateRoom = new RoomUpdateCommand({
-      server: this.server,
-      store: this.store
-    })
+    const roomUpdate = this.commandFinder.findByType(RoomUpdateCommand.type)
 
-    await updateRoom.sendCommand()
+    await roomUpdate.sendCommand()
 
-    const createGame = new RoomCreateGameCommand({
-      server: this.server,
-      store: this.store
-    })
+    const createGame = this.commandFinder.findByType(RoomCreateGameCommand.type)
 
     await createGame.sendCommand({
       roomId
@@ -66,4 +60,9 @@ export class RoomAddUserCommand extends BaseCommand implements Command {
 
     return room
   }
+
+  /**
+   * @throws {Error}
+   */
+  public async sendCommand(): Promise<void> {}
 }

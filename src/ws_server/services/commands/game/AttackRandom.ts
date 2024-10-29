@@ -22,4 +22,9 @@ export class GameAttackRandomCommand extends BaseCommand implements Command {
     message: PayloadReceiveCommand & { data: PayloadReceiveGameAttackRandom }
     socket: WebSocket
   }): Promise<void> {}
+
+  /**
+   * @throws {Error}
+   */
+  public async sendCommand(): Promise<void> {}
 }

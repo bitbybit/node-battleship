@@ -18,4 +18,9 @@ export class GameTurnCommand extends BaseCommand implements Command {
     message: PayloadReceiveCommand
     socket: WebSocket
   }): Promise<void> {}
+
+  /**
+   * @throws {Error}
+   */
+  public async sendCommand(): Promise<void> {}
 }

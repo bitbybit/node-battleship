@@ -22,4 +22,9 @@ export class GameAttackCommand extends BaseCommand implements Command {
     message: PayloadReceiveCommand & { data: PayloadReceiveGameAttack }
     socket: WebSocket
   }): Promise<void> {}
+
+  /**
+   * @throws {Error}
+   */
+  public async sendCommand(): Promise<void> {}
 }

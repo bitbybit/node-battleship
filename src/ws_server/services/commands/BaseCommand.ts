@@ -1,5 +1,6 @@
 import { WebSocket, type WebSocketServer } from 'ws'
 import {
+  type AbstractCommandFinder,
   type BaseCommandParams,
   type PayloadReceiveCommand,
   type PayloadSendCommand,
@@ -10,10 +11,12 @@ import {
 } from '../../interfaces'
 
 export abstract class BaseCommand {
+  protected readonly commandFinder: AbstractCommandFinder
   protected readonly server: WebSocketServer
   protected readonly store: Store
 
   constructor(params: BaseCommandParams) {
+    this.commandFinder = params.commandFinder
     this.server = params.server
     this.store = params.store
   }
