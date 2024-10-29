@@ -8,9 +8,9 @@ import {
   type Room
 } from '../../../interfaces'
 
-export const type = 'create_game'
-
 export class RoomCreateGameCommand extends BaseCommand implements Command {
+  static readonly type = 'create_game'
+
   /**
    * @param params
    * @param params.message
@@ -57,7 +57,7 @@ export class RoomCreateGameCommand extends BaseCommand implements Command {
           idPlayer: room.player1Id
         },
         id: 0,
-        type
+        type: RoomCreateGameCommand.type
       },
       socket: player1Socket
     })
@@ -69,13 +69,9 @@ export class RoomCreateGameCommand extends BaseCommand implements Command {
           idPlayer: room.player2Id as PlayerId
         },
         id: 0,
-        type
+        type: RoomCreateGameCommand.type
       },
       socket: player2Socket
     })
   }
-}
-
-export const roomCreateGame = {
-  [type]: RoomCreateGameCommand
 }

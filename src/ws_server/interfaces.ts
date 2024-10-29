@@ -216,4 +216,10 @@ export interface Command {
   }): Promise<unknown>
 }
 
-export type CommandClass = { new (params: BaseCommandParams): Command }
+export interface CommandWithType {
+  type: string
+}
+
+export type CommandClass = {
+  new (params: BaseCommandParams): Command
+} & CommandWithType

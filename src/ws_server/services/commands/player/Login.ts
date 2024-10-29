@@ -12,9 +12,9 @@ import {
 import { isValidPlayerName, isValidPlayerPassword } from '../../../validation'
 import { RoomUpdateCommand } from '../room/Update'
 
-export const type = 'reg'
-
 export class PlayerLoginCommand extends BaseCommand implements Command {
+  static readonly type = 'reg'
+
   /**
    * @param params
    * @param params.message
@@ -49,7 +49,7 @@ export class PlayerLoginCommand extends BaseCommand implements Command {
         data: {
           data,
           id: 0,
-          type
+          type: PlayerLoginCommand.type
         },
         socket
       })
@@ -65,7 +65,7 @@ export class PlayerLoginCommand extends BaseCommand implements Command {
         data: {
           data,
           id: 0,
-          type
+          type: PlayerLoginCommand.type
         },
         socket
       })
@@ -153,8 +153,4 @@ export class PlayerLoginCommand extends BaseCommand implements Command {
 
     return playerAuthorized
   }
-}
-
-export const playerLogin = {
-  [type]: PlayerLoginCommand
 }

@@ -9,9 +9,9 @@ import {
 } from '../../../interfaces'
 import { RoomUpdateCommand } from './Update'
 
-export const type = 'create_room'
-
 export class RoomCreateCommand extends BaseCommand implements Command {
+  static readonly type = 'create_room'
+
   /**
    * @param params
    * @param params.message
@@ -50,8 +50,4 @@ export class RoomCreateCommand extends BaseCommand implements Command {
 
     return newRoom
   }
-}
-
-export const roomCreate = {
-  [type]: RoomCreateCommand
 }

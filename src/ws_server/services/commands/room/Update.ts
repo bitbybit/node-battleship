@@ -7,9 +7,9 @@ import {
   type Room
 } from '../../../interfaces'
 
-export const type = 'update_room'
-
 export class RoomUpdateCommand extends BaseCommand implements Command {
+  static readonly type = 'update_room'
+
   /**
    * @param params
    * @param params.message
@@ -39,7 +39,7 @@ export class RoomUpdateCommand extends BaseCommand implements Command {
         data: {
           data,
           id: 0,
-          type
+          type: RoomUpdateCommand.type
         },
         socket
       })
@@ -84,8 +84,4 @@ export class RoomUpdateCommand extends BaseCommand implements Command {
       roomUsers
     }
   }
-}
-
-export const roomUpdate = {
-  [type]: RoomUpdateCommand
 }

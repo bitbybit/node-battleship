@@ -2,9 +2,9 @@ import { type WebSocket } from 'ws'
 import { BaseCommand } from '../BaseCommand'
 import { type Command, type PayloadReceiveCommand } from '../../../interfaces'
 
-export const type = 'start_game'
-
 export class ShipStartGameCommand extends BaseCommand implements Command {
+  static readonly type = 'start_game'
+
   /**
    * @param params
    * @param params.message
@@ -20,8 +20,4 @@ export class ShipStartGameCommand extends BaseCommand implements Command {
   }): Promise<void> {
     this.logOnReceive(message)
   }
-}
-
-export const shipStartGame = {
-  [type]: ShipStartGameCommand
 }

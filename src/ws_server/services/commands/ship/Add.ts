@@ -6,9 +6,9 @@ import {
   type PayloadReceiveShipAdd
 } from '../../../interfaces'
 
-export const type = 'add_ships'
-
 export class ShipAddCommand extends BaseCommand implements Command {
+  static readonly type = 'add_ships'
+
   /**
    * @param params
    * @param params.message
@@ -24,8 +24,4 @@ export class ShipAddCommand extends BaseCommand implements Command {
   }): Promise<void> {
     this.logOnReceive(message as PayloadReceiveCommand)
   }
-}
-
-export const shipAdd = {
-  [type]: ShipAddCommand
 }

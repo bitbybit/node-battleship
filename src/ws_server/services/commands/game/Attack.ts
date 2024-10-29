@@ -6,9 +6,9 @@ import {
   type PayloadReceiveGameAttack
 } from '../../../interfaces'
 
-export const type = 'attack'
-
 export class GameAttackCommand extends BaseCommand implements Command {
+  static readonly type = 'attack'
+
   /**
    * @param params
    * @param params.message
@@ -24,8 +24,4 @@ export class GameAttackCommand extends BaseCommand implements Command {
   }): Promise<void> {
     this.logOnReceive(message as PayloadReceiveCommand)
   }
-}
-
-export const gameAttack = {
-  [type]: GameAttackCommand
 }

@@ -132,14 +132,16 @@ export class App {
   }
 
   #getInstanceOfCommand(commandClass: CommandClass): Command {
-    const hasInstance = this.#commandInstances.has(commandClass.name)
+    const hasInstance = this.#commandInstances.has(commandClass.type)
 
     if (hasInstance) {
-      const instance = this.#commandInstances.get(commandClass.name)
+      const instance = this.#commandInstances.get(commandClass.type)
       const isCommand = instance instanceof BaseCommand
 
       if (!isCommand) {
-        throw new Error(`${commandClass.name} is not a Command class instance`)
+        throw new Error(
+          `Class with a type ${commandClass.type} is not a Command class instance`
+        )
       }
 
       return instance
@@ -150,7 +152,7 @@ export class App {
       store: this.#store
     })
 
-    this.#commandInstances.set(commandClass.name, instance)
+    this.#commandInstances.set(commandClass.type, instance)
 
     return instance
   }

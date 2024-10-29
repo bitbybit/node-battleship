@@ -1,40 +1,35 @@
 import { type CommandClass, type PayloadReceiveCommand } from '../../interfaces'
-import { playerLogin } from './player/Login'
-import { playerUpdateWinners } from './player/UpdateWinners'
-import { roomCreate } from './room/Create'
-import { roomAddUser } from './room/AddUser'
-import { roomCreateGame } from './room/CreateGame'
-import { roomUpdate } from './room/Update'
-import { shipAdd } from './ship/Add'
-import { shipStartGame } from './ship/StartGame'
-import { gameAttackRandom } from './game/AttackRandom'
-import { gameAttack } from './game/Attack'
-import { gameTurn } from './game/Turn'
-import { gameFinish } from './game/Finish'
+import { PlayerLoginCommand } from './player/Login'
+import { PlayerUpdateWinnersCommand } from './player/UpdateWinners'
+import { RoomCreateCommand } from './room/Create'
+import { RoomAddUserCommand } from './room/AddUser'
+import { RoomCreateGameCommand } from './room/CreateGame'
+import { RoomUpdateCommand } from './room/Update'
+import { ShipAddCommand } from './ship/Add'
+import { ShipStartGameCommand } from './ship/StartGame'
+import { GameAttackRandomCommand } from './game/AttackRandom'
+import { GameAttackCommand } from './game/Attack'
+import { GameTurnCommand } from './game/Turn'
+import { GameFinishCommand } from './game/Finish'
 
 export class CommandFinder {
-  readonly #commands: {
-    [type: string]: CommandClass
-  } = {}
+  readonly #commands: CommandClass[]
 
   constructor() {
-    this.#commands = {
-      ...playerLogin,
-      ...playerUpdateWinners,
-
-      ...roomCreate,
-      ...roomAddUser,
-      ...roomCreateGame,
-      ...roomUpdate,
-
-      ...shipAdd,
-      ...shipStartGame,
-
-      ...gameAttackRandom,
-      ...gameAttack,
-      ...gameTurn,
-      ...gameFinish
-    }
+    this.#commands = [
+      PlayerLoginCommand,
+      PlayerUpdateWinnersCommand,
+      RoomCreateCommand,
+      RoomAddUserCommand,
+      RoomCreateGameCommand,
+      RoomUpdateCommand,
+      ShipAddCommand,
+      ShipStartGameCommand,
+      GameAttackRandomCommand,
+      GameAttackCommand,
+      GameTurnCommand,
+      GameFinishCommand
+    ]
   }
 
   /**
@@ -49,13 +44,15 @@ export class CommandFinder {
 
     const { type } = message
 
-    const command = this.#commands[type]
+    const command = this.#commands.find(
+      (commandClass) => commandClass.type === type
+    )
 
     if (command === undefined) {
       throw new Error(`Command not found for message type ${type}`)
     }
 
-    return this.#commands[type]
+    return command
   }
 
   #isValidMessage(message: {

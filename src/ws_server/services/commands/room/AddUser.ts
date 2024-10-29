@@ -9,9 +9,9 @@ import {
 import { RoomUpdateCommand } from './Update'
 import { RoomCreateGameCommand } from './CreateGame'
 
-export const type = 'add_user_to_room'
-
 export class RoomAddUserCommand extends BaseCommand implements Command {
+  static readonly type = 'add_user_to_room'
+
   /**
    * @param params
    * @param params.message
@@ -68,8 +68,4 @@ export class RoomAddUserCommand extends BaseCommand implements Command {
 
     return room
   }
-}
-
-export const roomAddUser = {
-  [type]: RoomAddUserCommand
 }
