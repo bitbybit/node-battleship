@@ -215,6 +215,12 @@ export type PayloadSendCommand = {
 }
 
 export type Store = {
+  playDesk: {
+    xMin: number
+    xMax: number
+    yMin: number
+    yMax: number
+  }
   players: Player[]
   playersAuthorized: PlayerAuthorized[]
   rooms: Room[]

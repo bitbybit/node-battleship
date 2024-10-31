@@ -2,10 +2,13 @@ import { type WebSocket } from 'ws'
 import { BaseCommand } from '../BaseCommand'
 import {
   type Command,
+  type Game,
   type PayloadReceiveCommand,
   type PayloadReceiveGameAttack,
   type PayloadSendGameAttack,
-  type Ship
+  type Player,
+  type Ship,
+  type ShipPosition
 } from '../../../interfaces'
 import { GameTurnCommand } from './Turn'
 
@@ -27,6 +30,40 @@ export class GameAttackCommand extends BaseCommand implements Command {
   }): Promise<void> {
     const { gameId, x, y, indexPlayer: playerId } = message.data
 
+    await this.#doAttack({
+      gameId,
+      playerId,
+      playerSocket: socket,
+      position: {
+        x,
+        y
+      }
+    })
+  }
+
+  /**
+   * @param params
+   * @param params.gameId
+   * @param params.playerId
+   * @param params.playerSocket
+   * @param params.position
+   * @throws {Error}
+   */
+  async #doAttack({
+    gameId,
+    playerId,
+    playerSocket,
+    position
+  }: {
+    gameId: Game['id']
+    playerId: Player['id']
+    playerSocket: WebSocket
+    position: ShipPosition
+  }): Promise<void> {
+    this.#validateCoordinates(position)
+
+    const { x, y } = position
+
     const gameIndex = this.findGameIndexById(gameId)
 
     if (gameIndex === -1) {
@@ -41,6 +78,106 @@ export class GameAttackCommand extends BaseCommand implements Command {
       throw new Error(`Unable to find player with id ${playerId}`)
     }
 
+    this.#validatePlayerTurn({
+      game,
+      playerId
+    })
+
+    const playerOpposingId = this.#getPlayerOpposingId({
+      game,
+      playerId
+    })
+
+    const sockets = [playerSocket, this.findSocketByPlayerId(playerOpposingId)]
+
+    const { status, ship } = this.#getShotResult({
+      coordinates: {
+        x,
+        y
+      },
+      gameId: game.id,
+      playerOpposingId
+    })
+
+    const isKilled = status === 'killed' && ship !== null
+
+    if (isKilled) {
+      this.#sendKilled({
+        playerShootId: playerId,
+        ship,
+        sockets
+      })
+
+      this.store.games[gameIndex].lastAttack = 'killed'
+    } else {
+      this.#sendHitOrMiss({
+        coordinates: {
+          x,
+          y
+        },
+        playerShootId: playerId,
+        sockets,
+        status
+      })
+
+      this.store.games[gameIndex].lastAttack = status
+    }
+
+    const gameTurn = this.commandFinder.findByType(GameTurnCommand.type)
+
+    await gameTurn.sendCommand({
+      gameId
+    })
+  }
+
+  #isCoordinateWithinPlayDesk(side: 'x' | 'y', coordinate: number): boolean {
+    if (side === 'x') {
+      return (
+        coordinate >= this.store.playDesk.xMin &&
+        coordinate <= this.store.playDesk.xMax
+      )
+    }
+
+    return (
+      coordinate >= this.store.playDesk.yMin &&
+      coordinate <= this.store.playDesk.yMax
+    )
+  }
+
+  /**
+   * @param position
+   * @throws {Error}
+   */
+  #validateCoordinates(position: ShipPosition) {
+    let isInteger = false
+
+    Object.values(position).forEach((coordinate) => {
+      isInteger = Number.isInteger(coordinate)
+    })
+
+    const isValidX = this.#isCoordinateWithinPlayDesk('x', position.x)
+    const isValidY = this.#isCoordinateWithinPlayDesk('y', position.y)
+
+    const isValid = isInteger && isValidX && isValidY
+
+    if (!isValid) {
+      throw new Error('Coordinates position is wrong')
+    }
+  }
+
+  /**
+   * @param params
+   * @param params.game
+   * @param params.playerId
+   * @throws {Error}
+   */
+  #validatePlayerTurn({
+    game,
+    playerId
+  }: {
+    game: Game
+    playerId: Player['id']
+  }) {
     const turnIndex = this.findTurnIndexByGameId(game.id)
 
     if (turnIndex === -1) {
@@ -56,7 +193,22 @@ export class GameAttackCommand extends BaseCommand implements Command {
         `Player with id ${playerId} is not allowed to make an attack in this turn`
       )
     }
+  }
 
+  /**
+   * @param params
+   * @param params.game
+   * @param params.playerId
+   * @throws {Error}
+   * @returns string
+   */
+  #getPlayerOpposingId({
+    game,
+    playerId
+  }: {
+    game: Game
+    playerId: Player['id']
+  }): string {
     const isPlayer1 = game.player1Id === playerId
     const isPlayer2 = game.player2Id === playerId
 
@@ -75,13 +227,42 @@ export class GameAttackCommand extends BaseCommand implements Command {
       this.findPlayerById(playerOpposingId) === undefined
     ) {
       throw new Error(
-        `Unable to find opposing player for game with id ${gameId} and player with id ${playerId}`
+        `Unable to find opposing player for game with id ${game.id} and player with id ${playerId}`
       )
     }
 
-    const ships = this.findShipsByGameAndPlayer(game.id, playerOpposingId)
+    return playerOpposingId
+  }
 
-    let ship: Ship
+  /**
+   * @param params
+   * @param params.coordinates
+   * @param params.coordinates.x
+   * @param params.coordinates.y
+   * @param params.gameId
+   * @param params.playerOpposingId
+   * @returns object
+   * @throws {Error}
+   */
+  #getShotResult({
+    coordinates,
+    gameId,
+    playerOpposingId
+  }: {
+    coordinates: {
+      x: PayloadSendGameAttack['position']['x']
+      y: PayloadSendGameAttack['position']['y']
+    }
+    gameId: Game['id']
+    playerOpposingId: Player['id']
+  }): {
+    ship: Ship | null
+    status: PayloadSendGameAttack['status']
+  } {
+    const ships = this.findShipsByGameAndPlayer(gameId, playerOpposingId)
+
+    let ship: Ship | null = null
+    let status: PayloadSendGameAttack['status']
 
     let isHit = false
     let isKilled = false
@@ -95,15 +276,15 @@ export class GameAttackCommand extends BaseCommand implements Command {
       const yMin = position.y
       const yMax = isVertical ? position.y + length - 1 : position.y
 
-      const isHitX = x >= xMin && x <= xMax
-      const isHitY = y >= yMin && y <= yMax
+      const isHitX = coordinates.x >= xMin && coordinates.x <= xMax
+      const isHitY = coordinates.y >= yMin && coordinates.y <= yMax
 
       isHit = isHitX && isHitY
 
       const shipIndex = this.findShipIndexById(id)
 
       if (shipIndex === -1) {
-        throw new Error(`Unable to find ship with id ${id}`)
+        throw new Error(`Unable to find a ship with id ${id}`)
       }
 
       if (isHit) {
@@ -118,191 +299,233 @@ export class GameAttackCommand extends BaseCommand implements Command {
       }
     }
 
-    const players = [socket, this.findSocketByPlayerId(playerOpposingId)]
+    if (isKilled) {
+      status = 'killed'
+    } else {
+      if (isHit) {
+        status = 'shot'
+      } else {
+        status = 'miss'
+      }
+    }
 
-    const sendPositionStatusFor = ({
-      x,
-      y,
+    return {
       status,
-      playerShootId,
-      socket
-    }: {
+      ship
+    }
+  }
+
+  #sendPositionStatusFor({
+    coordinates,
+    status,
+    playerShootId,
+    socket
+  }: {
+    coordinates: {
       x: PayloadSendGameAttack['position']['x']
       y: PayloadSendGameAttack['position']['y']
-      status: PayloadSendGameAttack['status']
-      playerShootId: PayloadSendGameAttack['currentPlayer']
-      socket: WebSocket
-    }) => {
-      const data: PayloadSendGameAttack = {
-        position: {
-          x,
-          y
-        },
-        currentPlayer: playerShootId,
-        status
-      }
+    }
+    status: PayloadSendGameAttack['status']
+    playerShootId: PayloadSendGameAttack['currentPlayer']
+    socket: WebSocket
+  }): void {
+    const data: PayloadSendGameAttack = {
+      position: {
+        x: coordinates.x,
+        y: coordinates.y
+      },
+      currentPlayer: playerShootId,
+      status
+    }
 
-      this.send({
-        message: {
-          data,
-          id: 0,
-          type: GameAttackCommand.type
-        },
+    this.send({
+      message: {
+        data,
+        id: 0,
+        type: GameAttackCommand.type
+      },
+      socket
+    })
+  }
+
+  #sendHitOrMiss({
+    coordinates,
+    playerShootId,
+    sockets,
+    status
+  }: {
+    coordinates: {
+      x: PayloadSendGameAttack['position']['x']
+      y: PayloadSendGameAttack['position']['y']
+    }
+    playerShootId: PayloadSendGameAttack['currentPlayer']
+    sockets: WebSocket[]
+    status: PayloadSendGameAttack['status']
+  }): void {
+    for (const socket of sockets) {
+      this.#sendPositionStatusFor({
+        coordinates,
+        status,
+        playerShootId,
+        socket
+      })
+    }
+  }
+
+  #sendKilledForSide({
+    playerShootId,
+    side,
+    ship,
+    socket
+  }: {
+    playerShootId: PayloadSendGameAttack['currentPlayer']
+    side: 'x' | 'y'
+    ship: Ship
+    socket: WebSocket
+  }): void {
+    const isX = side === 'x'
+
+    for (
+      let posSide = ship.position[side];
+      posSide <= ship.position[side] + ship.length - 1;
+      posSide++
+    ) {
+      const coordinates = isX
+        ? {
+            x: posSide,
+            y: ship.position.y
+          }
+        : {
+            x: ship.position.x,
+            y: posSide
+          }
+
+      this.#sendPositionStatusFor({
+        coordinates,
+        status: 'killed',
+        playerShootId,
         socket
       })
     }
 
-    const sendKilled = () => {
-      for (const socket of players) {
-        const isVertical = ship.direction
+    const sideBefore = ship.position[side] - 1
+    const sideAfter = ship.position[side] + ship.length
 
-        if (isVertical) {
-          for (
-            let posY = ship.position.y;
-            posY <= ship.position.y + ship.length - 1;
-            posY++
-          ) {
-            sendPositionStatusFor({
-              x: ship.position.x,
-              y: posY,
-              status: 'killed',
-              playerShootId: playerId,
-              socket
-            })
+    if (this.#isCoordinateWithinPlayDesk(side, sideBefore)) {
+      const coordinates = isX
+        ? {
+            x: sideBefore,
+            y: ship.position.y
+          }
+        : {
+            x: ship.position.x,
+            y: sideBefore
           }
 
-          const yBefore = ship.position.y - 1
-          const yAfter = ship.position.y + ship.length
-
-          if (yBefore >= 0 && yBefore <= 9) {
-            sendPositionStatusFor({
-              x: ship.position.x,
-              y: yBefore,
-              status: 'miss',
-              playerShootId: playerId,
-              socket
-            })
-          }
-
-          for (let posY = yBefore; posY <= yAfter; posY++) {
-            if (posY >= 0 && posY <= 9) {
-              const sideX = [ship.position.x - 1, ship.position.x + 1]
-
-              sideX.forEach((side) => {
-                if (side >= 0 && side <= 9) {
-                  sendPositionStatusFor({
-                    x: side,
-                    y: posY,
-                    status: 'miss',
-                    playerShootId: playerId,
-                    socket
-                  })
-                }
-              })
-            }
-          }
-
-          if (yAfter >= 0 && yAfter <= 9) {
-            sendPositionStatusFor({
-              x: ship.position.x,
-              y: yAfter,
-              status: 'miss',
-              playerShootId: playerId,
-              socket
-            })
-          }
-        } else {
-          for (
-            let posX = ship.position.x;
-            posX <= ship.position.x + ship.length - 1;
-            posX++
-          ) {
-            sendPositionStatusFor({
-              x: posX,
-              y: ship.position.y,
-              status: 'killed',
-              playerShootId: playerId,
-              socket
-            })
-          }
-
-          const xBefore = ship.position.x - 1
-          const xAfter = ship.position.x + ship.length
-
-          if (xBefore >= 0 && xBefore <= 9) {
-            sendPositionStatusFor({
-              x: xBefore,
-              y: ship.position.y,
-              status: 'miss',
-              playerShootId: playerId,
-              socket
-            })
-          }
-
-          for (let posX = xBefore; posX <= xAfter; posX++) {
-            if (posX >= 0 && posX <= 9) {
-              const sideY = [ship.position.y - 1, ship.position.y + 1]
-
-              sideY.forEach((side) => {
-                if (side >= 0 && side <= 9) {
-                  sendPositionStatusFor({
-                    x: posX,
-                    y: side,
-                    status: 'miss',
-                    playerShootId: playerId,
-                    socket
-                  })
-                }
-              })
-            }
-          }
-
-          if (xAfter >= 0 && xAfter <= 9) {
-            sendPositionStatusFor({
-              x: xAfter,
-              y: ship.position.y,
-              status: 'miss',
-              playerShootId: playerId,
-              socket
-            })
-          }
-        }
-      }
-
-      this.store.games[gameIndex].lastAttack = 'killed'
+      this.#sendPositionStatusFor({
+        coordinates,
+        status: 'miss',
+        playerShootId,
+        socket
+      })
     }
 
-    const sendHitOrMiss = () => {
-      const status = isHit ? 'shot' : 'miss'
+    for (let posSide = sideBefore; posSide <= sideAfter; posSide++) {
+      if (this.#isCoordinateWithinPlayDesk(side, posSide)) {
+        const nearPosSideName = isX ? 'y' : 'x'
+        const nearPosSides = [
+          ship.position[nearPosSideName] - 1,
+          ship.position[nearPosSideName] + 1
+        ]
 
-      for (const socket of players) {
-        sendPositionStatusFor({
-          x,
-          y,
-          status,
-          playerShootId: playerId,
-          socket
+        nearPosSides.forEach((nearPos) => {
+          if (this.#isCoordinateWithinPlayDesk(nearPosSideName, nearPos)) {
+            const coordinates = isX
+              ? {
+                  x: posSide,
+                  y: nearPos
+                }
+              : {
+                  x: nearPos,
+                  y: posSide
+                }
+
+            this.#sendPositionStatusFor({
+              coordinates,
+              status: 'miss',
+              playerShootId,
+              socket
+            })
+          }
         })
       }
-
-      this.store.games[gameIndex].lastAttack = status
     }
 
-    if (isKilled) {
-      sendKilled()
-    } else {
-      sendHitOrMiss()
+    if (this.#isCoordinateWithinPlayDesk(side, sideAfter)) {
+      const coordinates = isX
+        ? {
+            x: sideAfter,
+            y: ship.position.y
+          }
+        : {
+            x: ship.position.x,
+            y: sideAfter
+          }
+
+      this.#sendPositionStatusFor({
+        coordinates,
+        status: 'miss',
+        playerShootId,
+        socket
+      })
     }
+  }
 
-    const gameTurn = this.commandFinder.findByType(GameTurnCommand.type)
+  #sendKilled({
+    playerShootId,
+    ship,
+    sockets
+  }: {
+    playerShootId: PayloadSendGameAttack['currentPlayer']
+    ship: Ship
+    sockets: WebSocket[]
+  }) {
+    for (const socket of sockets) {
+      const isVertical = ship.direction
 
-    await gameTurn.sendCommand({
-      gameId
-    })
+      this.#sendKilledForSide({
+        playerShootId,
+        side: isVertical ? 'y' : 'x',
+        ship,
+        socket
+      })
+    }
   }
 
   /**
+   * @param params
+   * @param params.gameId
+   * @param params.playerId
+   * @param params.playerSocket
+   * @param params.position
    * @throws {Error}
    */
-  public async sendCommand(): Promise<void> {}
+  public async sendCommand({
+    gameId,
+    playerId,
+    playerSocket,
+    position
+  }: {
+    gameId: Game['id']
+    playerId: Player['id']
+    playerSocket: WebSocket
+    position: ShipPosition
+  }): Promise<void> {
+    await this.#doAttack({
+      gameId,
+      playerId,
+      playerSocket,
+      position
+    })
+  }
 }

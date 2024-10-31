@@ -9,7 +9,6 @@ import {
   type Player,
   type PlayerAuthorized
 } from '../../../interfaces'
-import { isValidPlayerName, isValidPlayerPassword } from '../../../validation'
 import { RoomUpdateCommand } from '../room/Update'
 
 export class PlayerLoginCommand extends BaseCommand implements Command {
@@ -74,6 +73,14 @@ export class PlayerLoginCommand extends BaseCommand implements Command {
     await roomUpdate.sendCommand()
   }
 
+  #isValidPlayerName(name: unknown): boolean {
+    return typeof name === 'string' && name.trim() !== ''
+  }
+
+  #isValidPlayerPassword(password: unknown): boolean {
+    return typeof password === 'string' && password.trim() !== ''
+  }
+
   /**
    * @param player
    * @returns Player
@@ -117,11 +124,11 @@ export class PlayerLoginCommand extends BaseCommand implements Command {
   }): PlayerAuthorized {
     const { name, password } = payload
 
-    if (!isValidPlayerName(name)) {
+    if (!this.#isValidPlayerName(name)) {
       throw new Error(`Player name is invalid`)
     }
 
-    if (!isValidPlayerPassword(password)) {
+    if (!this.#isValidPlayerPassword(password)) {
       throw new Error(`Player password is invalid`)
     }
 
