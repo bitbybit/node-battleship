@@ -17,6 +17,7 @@ export type Player = {
   id: PlayerId
   name: string
   password: string
+  wins: number
 }
 
 export type PlayerAuthorized = {

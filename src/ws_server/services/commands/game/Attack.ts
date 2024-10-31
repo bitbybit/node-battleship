@@ -11,6 +11,8 @@ import {
   type ShipPosition
 } from '../../../interfaces'
 import { GameTurnCommand } from './Turn'
+import { GameFinishCommand } from './Finish'
+import { PlayerUpdateWinnersCommand } from '../player/UpdateWinners'
 
 export class GameAttackCommand extends BaseCommand implements Command {
   static readonly type = 'attack'
@@ -123,11 +125,41 @@ export class GameAttackCommand extends BaseCommand implements Command {
       this.store.games[gameIndex].lastAttack = status
     }
 
-    const gameTurn = this.commandFinder.findByType(GameTurnCommand.type)
+    const shipsAlivePlayer = this.findShipsAlive(game.id, playerId)
 
-    await gameTurn.sendCommand({
-      gameId
-    })
+    const shipsAlivePlayerOpposing = this.findShipsAlive(
+      game.id,
+      playerOpposingId
+    )
+
+    const isWinnerPlayer = shipsAlivePlayerOpposing.length === 0
+    const isWinnerPlayerOpposing = shipsAlivePlayer.length === 0
+    const isGameFinished = isWinnerPlayer || isWinnerPlayerOpposing
+
+    if (isGameFinished) {
+      const playerWinnerId = isWinnerPlayer ? playerId : playerOpposingId
+
+      const gameFinish = this.commandFinder.findByType(GameFinishCommand.type)
+
+      await gameFinish.sendCommand({
+        gameId: game.id,
+        playerWinnerId
+      })
+
+      const playerUpdateWinners = this.commandFinder.findByType(
+        PlayerUpdateWinnersCommand.type
+      )
+
+      await playerUpdateWinners.sendCommand({
+        playerWinnerId
+      })
+    } else {
+      const gameTurn = this.commandFinder.findByType(GameTurnCommand.type)
+
+      await gameTurn.sendCommand({
+        gameId
+      })
+    }
   }
 
   #isCoordinateWithinPlayDesk(side: 'x' | 'y', coordinate: number): boolean {

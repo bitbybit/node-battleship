@@ -86,9 +86,10 @@ export class PlayerLoginCommand extends BaseCommand implements Command {
    * @returns Player
    * @throws {Error}
    */
-  #createPlayer(player: Omit<Player, 'id'>): Player {
+  #createPlayer(player: Omit<Player, 'id' | 'wins'>): Player {
     const newPlayer: Player = {
       id: randomUUID(),
+      wins: 0,
       ...player
     }
 
