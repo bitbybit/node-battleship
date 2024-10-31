@@ -5,5 +5,6 @@ export const store: Store = {
   playersAuthorized: [],
   rooms: [],
   games: [],
-  ships: []
+  ships: [],
+  turns: []
 }

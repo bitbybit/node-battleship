@@ -7,6 +7,7 @@ import {
   type PayloadSendShipStartGame,
   type Ship
 } from '../../../interfaces'
+import { GameTurnCommand } from '../game/Turn'
 
 export class ShipStartGameCommand extends BaseCommand implements Command {
   static readonly type = 'start_game'
@@ -64,6 +65,12 @@ export class ShipStartGameCommand extends BaseCommand implements Command {
         socket
       })
     }
+
+    const gameTurn = this.commandFinder.findByType(GameTurnCommand.type)
+
+    await gameTurn.sendCommand({
+      gameId
+    })
   }
 
   #shipsToData({

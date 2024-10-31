@@ -46,6 +46,7 @@ export class ShipAddCommand extends BaseCommand implements Command {
           gameId,
           id: randomUUID(),
           length,
+          life: length,
           playerId,
           position,
           type

@@ -8,7 +8,8 @@ import {
   type Player,
   type Room,
   type Ship,
-  type Store
+  type Store,
+  type Turn
 } from '../../interfaces'
 
 export abstract class BaseCommand {
@@ -152,6 +153,10 @@ export abstract class BaseCommand {
     return this.store.games.find(({ id }) => id === gameId)
   }
 
+  protected findGameIndexById(gameId: Game['id']): number {
+    return this.store.games.findIndex(({ id }) => id === gameId)
+  }
+
   protected findShipsOfPlayersByGameId(gameId: Game['id']): Ship[] {
     const game = this.findGameById(gameId)
 
@@ -183,6 +188,14 @@ export abstract class BaseCommand {
     return this.store.ships.filter(
       (ship) => ship.gameId === gameId && ship.playerId === playerId
     )
+  }
+
+  protected findShipIndexById(shipId: Ship['id']): number {
+    return this.store.ships.findIndex(({ id }) => id === shipId)
+  }
+
+  protected findTurnIndexByGameId(gameId: Game['id']): number {
+    return this.store.turns.findIndex((turn) => turn.gameId === gameId)
   }
 
   #formatMessage(message: PayloadSendCommand): string {

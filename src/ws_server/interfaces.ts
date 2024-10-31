@@ -30,6 +30,7 @@ export type Game = {
   id: GameId
   player1Id: PlayerId
   player2Id: PlayerId
+  lastAttack: AttackStatus | null
 }
 
 export type ShipId = string
@@ -46,6 +47,7 @@ export type Ship = {
   gameId: GameId
   id: ShipId
   length: number
+  life: number
   playerId: PlayerId
   position: ShipPosition
   type: ShipType
@@ -59,6 +61,14 @@ export type Room = {
   id: RoomId
   player1Id: PlayerId
   player2Id: PlayerId | null
+}
+
+export type TurnId = string
+
+export type Turn = {
+  id: TurnId
+  gameId: GameId
+  playerId: PlayerId
 }
 
 /**
@@ -210,6 +220,7 @@ export type Store = {
   rooms: Room[]
   games: Game[]
   ships: Ship[]
+  turns: Turn[]
 }
 
 export interface AbstractCommandFinder {

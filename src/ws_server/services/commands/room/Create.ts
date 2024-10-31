@@ -35,7 +35,7 @@ export class RoomCreateCommand extends BaseCommand implements Command {
   #createRoom(socket: WebSocket): Room {
     const player = this.findPlayerBySocketId(socket.id)
 
-    const newRoom = {
+    const newRoom: Room = {
       id: randomUUID(),
       player1Id: player.id,
       player2Id: null

@@ -61,8 +61,9 @@ export class RoomCreateGameCommand extends BaseCommand implements Command {
       )
     }
 
-    const newGame = {
+    const newGame: Game = {
       id: randomUUID(),
+      lastAttack: null,
       player1Id,
       player2Id
     }
