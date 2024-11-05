@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "esnext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": true,
+    "lib": [
+      "esnext",
+      "dom"
+    ]
+  },
+  "include": [
+    "./src"
+  ],
+  "exclude": [
+    "./dist",
+    "./node_modules"
+  ],
+  "ts-node": {
+    "transpileOnly": true
+  }
+}
